@@ -1,6 +1,6 @@
-import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react'
+import { useUser } from '@supabase/auth-helpers-react'
 
-import { Container, Text, Link, Col, Row, Spacer, Grid } from "@nextui-org/react"
+import { Container, Text, Link, Spacer, Grid } from "@nextui-org/react"
 
 import Upload from '@/components/Upload'
 import Chat from '@/components/Chat'

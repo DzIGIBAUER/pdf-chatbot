@@ -1,10 +1,9 @@
 import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react'
-import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs'
 import { Auth } from '@supabase/auth-ui-react'
 import { ThemeSupa } from '@supabase/auth-ui-shared'
 import { useRouter } from 'next/router'
 
-export default function() {    
+export default function AuthPage() {    
     const supabase = useSupabaseClient()
 
     const user = useUser()
@@ -20,6 +19,7 @@ export default function() {
         <Auth
             supabaseClient={supabase}
             appearance={{ theme: ThemeSupa }}
+            providers={[]}
         />
     )
 }

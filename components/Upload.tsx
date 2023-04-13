@@ -1,5 +1,5 @@
 import { Container, Card, Input, Text, FormElement, Table, Button, Loading, PressEvent } from "@nextui-org/react"
-import { ChangeEvent, useEffect, useState } from "react"
+import { ChangeEvent, useCallback, useEffect, useState } from "react"
 import { useSupabaseClient } from "@supabase/auth-helpers-react"
 import { Delete } from "react-iconly"
 
@@ -20,7 +20,7 @@ export default function Upload() {
     const [uploading, setUploading] = useState(false)
     const [reloading, setReloading] = useState(false)
 
-    const reloadUploadedFiles = () => {
+    const reloadUploadedFiles = useCallback(() => {
         setReloading(true)
         supabase
             .from("files")
@@ -29,8 +29,8 @@ export default function Upload() {
                 setUploadedFiles((data as UploadedFile[]) || [])
                 setReloading(false)
             })
-    }
-    
+    }, [supabase])
+
     useEffect(() => {
         reloadUploadedFiles()
 
@@ -48,7 +48,7 @@ export default function Upload() {
                 }
             )
             .subscribe()
-    }, [])
+    }, [reloadUploadedFiles, supabase])
 
     const handleFilesChange = (e: ChangeEvent<FormElement>) => {
         if ('files' in e.target)
