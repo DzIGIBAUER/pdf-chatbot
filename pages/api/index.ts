@@ -1,7 +1,8 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 
-import {PDFExtract, PDFExtractResult} from 'pdf.js-extract'
+import { PDFExtract } from 'pdf.js-extract'
+
 
 import nc from "next-connect"
 import multer from "multer"
@@ -9,6 +10,7 @@ import multer from "multer"
 import path from 'node:path';
 import fs from "fs"
 import { promisify } from "util";
+
 
 const unlinkAsync = promisify(fs.unlink)
 
@@ -49,6 +51,8 @@ apiRoute.post(upload.array("pdfFiles"), async (req, res) => {
                 }
             }
         }))
+
+        console.log(require('path').basename(__dirname))
 
     } else {
         res.status(400).json({ error: "Expected array of files with one name" })

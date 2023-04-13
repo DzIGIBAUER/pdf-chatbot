@@ -78,6 +78,7 @@ export default function Upload() {
             setStatus("An error ocurred while uploading your files.")
         } finally {
             setUploading(false)
+            setReloading(false)
         }
     }
 
