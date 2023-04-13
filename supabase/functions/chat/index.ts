@@ -6,6 +6,7 @@ import { serve } from "http/server.ts"
 import { ChatOpenAI } from "langchain/chat_models/openai"
 import { OpenAIEmbeddings } from "langchain/embeddings/openai"
 import { SupabaseVectorStore  } from "langchain/vectorstores/supabase"
+import { ChatMessageHistory } from "langchain/memory"
 import { ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate } from "langchain/prompts"
 import { LLMChain } from "langchain/chains"
 import { Document } from "langchain/document"
@@ -14,7 +15,7 @@ import { createClient } from "../_shared/supabaseClient.ts"
 import { corsHeaders } from "../_shared/cors.ts";
 
 
-const embeddings = new OpenAIEmbeddings({modelName: "gpt-3.5-turbo"})
+const embeddings = new OpenAIEmbeddings()
 
 const llm = new ChatOpenAI({modelName: "gpt-3.5-turbo"})
 
@@ -22,9 +23,11 @@ const chatPrompt = ChatPromptTemplate.fromPromptMessages([
   SystemMessagePromptTemplate.fromTemplate(
     `You are a chatbot having a conversation with a human.
 
-    Given the following extracted parts of a long document and chat history, answer the users question.
-    
-    {docs}`
+    Given the following extracted parts of a long document and some unsorted but relevant previous chat messages, answer the users question and provide source.
+
+    Docs: {docs}
+    Chat: {chatHistory}
+    `
   ),
   HumanMessagePromptTemplate.fromTemplate("{message}")
 ])
@@ -32,7 +35,6 @@ const chatPrompt = ChatPromptTemplate.fromPromptMessages([
 const chain = new LLMChain({
   prompt: chatPrompt,
   llm,
-  verbose: true
 })
 
 serve(async (req) => {
@@ -45,28 +47,36 @@ serve(async (req) => {
 
   const client = createClient(req)
 
-  const vectorStore = new SupabaseVectorStore(embeddings, {
+  const { data: {user} } = await client.auth.getUser()
+
+  const docsStore = new SupabaseVectorStore(embeddings, {
     client,
     tableName: "documents",
-    queryName: "match_documents"  
+    queryName: "match_documents"
   })
 
-  const data = await vectorStore.similaritySearchWithScore(message)
+  const msgStore = new SupabaseVectorStore(embeddings, {
+    client,
+    tableName: "messages",
+    queryName: "match_messages",
+  })
 
-  console.log(data)
+  const docs = await docsStore.similaritySearch(message)
+  const messages = await msgStore.similaritySearch(message, 20)
 
-  /*const result = await chain.call({
+  const result = await chain.call({
     message,
-    docs: data,
-  })*/
+    docs: docs.map(doc => `${doc.pageContent} source: ${doc.metadata["source"]}`).join(";"),
+    chatHistory: messages.map(doc => `${doc.metadata["source"]}: ${doc.pageContent}`).join("\n")
+  })
 
-  vectorStore.addDocuments([
-    new Document({ pageContent: message, metadata: { source: "human" } })
-    //new Document({ pageContent: message, metadata: { source: "AI" } })
+  msgStore.addDocuments([
+    new Document({ pageContent: message, metadata: { source: "Human", user: user!.id } }),
+    new Document({ pageContent: result["text"], metadata: { source: "AI", user: user!.id } })
   ])
 
   return new Response(
-    JSON.stringify(data),
+    JSON.stringify(result),
     { headers: { ...corsHeaders, "Content-Type": "application/json" } },
   )
 })

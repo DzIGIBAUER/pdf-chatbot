@@ -12,7 +12,7 @@ import { createClient } from "../_shared/supabaseClient.ts"
 import { corsHeaders } from "../_shared/cors.ts"
 
 
-const embeddings = new OpenAIEmbeddings({modelName: "gpt-3.5-turbo"})
+const embeddings = new OpenAIEmbeddings()
 
 const textSplitter = new RecursiveCharacterTextSplitter({
   chunkSize: 700,
@@ -55,11 +55,15 @@ serve(async (req) => {
     tableName: "documents",
     queryName: "match_documents",
   })
+
   
   await vectorStore.addDocuments(docs)
+  
+  const toInsert = documents.map(doc => ({ user_id: user.id, filename: doc.metadata["source"] }))
+  const { data, error } = await client.from("files").insert(toInsert)
 
   return new Response(
-    JSON.stringify({ message: "Success" }),
+    JSON.stringify({ message: "Success", data, error }),
     { headers: { ...corsHeaders, "Content-Type": "application/json" } },
   )
 })
