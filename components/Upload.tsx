@@ -1,4 +1,4 @@
-import { Container, Card, Input, Text, FormElement, Table, Button, Loading, PressEvent } from "@nextui-org/react"
+import { Container, Input, Text, FormElement, Table, Button, Loading } from "@nextui-org/react"
 import { ChangeEvent, useCallback, useEffect, useState } from "react"
 import { useSupabaseClient } from "@supabase/auth-helpers-react"
 import { Delete } from "react-iconly"
@@ -95,45 +95,60 @@ export default function Upload() {
         })
     }
 
-    if (reloading) {
-        return <Container css={{ display: "flex", flexDirection: "column", justifyContent: "center", minHeight: "150px"}}>
-            <Loading />
-        </Container>
-    }
-
     return (
-        <Container css={{ display: "flex", flexDirection: "column", justifyContent: "center", minHeight: "150px"}}>
-            <Table aria-label="uploaded files">
-                <Table.Header>
-                    <Table.Column>File name</Table.Column>
-                    <Table.Column>Action</Table.Column>
-                </Table.Header>
-                <Table.Body>
-                    {uploadedFiles.map((uf, i) => (
-                        <Table.Row key={i}>
-                            <Table.Cell>
-                                <Text key={i}>{uf.filename}</Text>
-                            </Table.Cell>
-                            <Table.Cell>
-                                <Button
-                                    auto
-                                    icon={<Delete set="bold" primaryColor="blueviolet"/>}
-                                    css={{ backgroundColor: "transparent" }}
-                                    onPress={e => deleteFile(uf.filename)}
-                                />
-                            </Table.Cell>
-                        </Table.Row>
-                    ))}
-                </Table.Body>
-            </Table>
-            <Input
-                disabled={uploading}
-                type="file"
-                multiple
-                aria-label="upload"
-                onChange={handleFilesChange}
-                accept=".pdf"
-            />
+        <Container css={{ display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: "150px"}}>
+            {!uploadedFiles || !uploadedFiles.length ? (
+                reloading ? (
+                    <Loading />
+                ) : (
+                    <Text css={{ textAlign: "center" }}>No uploaded files</Text>
+                )
+            ) : (
+                <Table aria-label="uploaded files">
+                    <Table.Header>
+                        <Table.Column>File name</Table.Column>
+                        <Table.Column>Action</Table.Column>
+                    </Table.Header>
+                    <Table.Body>
+                        {uploadedFiles.map((uf, i) => (
+                            <Table.Row key={i}>
+                                <Table.Cell>
+                                    <Text key={i}>{uf.filename}</Text>
+                                </Table.Cell>
+                                <Table.Cell>
+                                    <Button
+                                        auto
+                                        icon={<Delete set="bold" primaryColor="blueviolet"/>}
+                                        css={{ backgroundColor: "transparent" }}
+                                        onPress={e => deleteFile(uf.filename)}
+                                    />
+                                </Table.Cell>
+                            </Table.Row>
+                        ))}
+                    </Table.Body>
+                </Table>
+            )}
+            
+            <Container css={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center" }}>
+                <Input
+                    css={{ width: "100%", "label": { width: "100%", cursor: "pointer", border: "$primaryBorder solid 1px" } }}
+                    hidden
+                    disabled={uploading}
+                    type="file"
+                    multiple
+                    aria-label="upload"
+                    onChange={handleFilesChange}
+                    accept=".pdf"
+                />
+                <Text css={{ position: "absolute", pointerEvents: "none" }}>
+                    {files && files.length ? (
+                        [...files].map(f => f.name).join("; ")
+                    ) : (
+                        "Click to select your files"
+                    )}
+                </Text>
+            </Container>
+
             <Button
                 disabled={!files || !files.length || uploading}
                 icon={uploading ? <Loading /> : null}
