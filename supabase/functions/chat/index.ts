@@ -6,7 +6,6 @@ import { serve } from "http/server.ts"
 import { ChatOpenAI } from "langchain/chat_models/openai"
 import { OpenAIEmbeddings } from "langchain/embeddings/openai"
 import { SupabaseVectorStore  } from "langchain/vectorstores/supabase"
-import { ChatMessageHistory } from "langchain/memory"
 import { ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate } from "langchain/prompts"
 import { LLMChain } from "langchain/chains"
 import { Document } from "langchain/document"
@@ -23,7 +22,10 @@ const chatPrompt = ChatPromptTemplate.fromPromptMessages([
   SystemMessagePromptTemplate.fromTemplate(
     `You are a chatbot having a conversation with a human.
 
-    Given the following extracted parts of a long document and some unsorted but relevant previous chat messages, answer the users question and provide source.
+    Given the following extracted parts of a long document and some unsorted but relevant previous chat messages, answer the users question.
+    DO NOT explain documents from chat history.
+    Make sure to include source of your information if there is one.
+    If there are no documents simply inform the user.
 
     Docs: {docs}
     Chat: {chatHistory}
